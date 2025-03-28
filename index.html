@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Production</title>
+    
+    
+</head>
+   
+
+<form id="loginForm" onsubmit="return validateForm()">
+    <h3 style="color: rgb(248, 0, 0); text-align: center;">Welcome to Stickman Madness</h3>
+    <label for="username" style="color: rgb(255, 0, 0);">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="age" style="color: rgb(255, 0, 0);">Age:</label>
+    <input type="number" id="age" name="age" required>
+    <br>
+    <button type="submit">Submit</button>
+</form>
+<button id="goBackButton" onclick="window.location.href='index2.html'" style="display: block; margin: 20px auto; padding: 10px 20px; background-color: red; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
+    Go Back
+</button>
+
+<script>
+    function validateForm() {
+        const username = document.getElementById("username").value;
+        const age = document.getElementById("age").value;
+
+        if (username === "" || age === "") {
+            alert("Please fill in all fields.");
+            return false;
+        }
+
+        if (age < 13) {
+            alert("You must be at least 13 years old to play.");
+            return false;
+        }
+
+        return true;
+    }
+</script>
+<style>
+    form {
+        background-color: rgba(0, 0, 0, 0.8);
+        border: 2px solid white;
+        border-radius: 10px;
+        padding: 20px;
+        width: 300px;
+        margin: 50px auto;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    form h3 {
+        font-family: 'Arial', sans-serif;
+        font-size: 20px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    form label {
+        font-family: 'Arial', sans-serif;
+        font-size: 14px;
+        color: white;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    form input[type="text"], form input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid white;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 14px;
+    }
+
+    form button {
+        width: 100%;
+        padding: 10px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    form button:hover {
+        background-color: darkred;
+    }
+</style>
+   
+
+
+<script>
+    // Show the game after login
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent form submission
+        const age = document.getElementById("age").value;
+        if (age >= 13) {
+            document.body.querySelector("form").style.display = "none"; // Hide the form
+            Array.from(document.body.children).forEach(child => {
+                if (child.tagName !== "FORM") {
+                    child.style.display = "block"; // Show all other elements
+                }
+            });
+        } else {
+            alert("You must be 13 or older to enter.");
+        }
+    });
+</script>
+
+
+
+
+     
+    
+    <canvas id="gameCanvas"></canvas>
+    <script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 800;
+canvas.height = 400;
+
+let player = { x: 200, y: 300, health: 100, punching: false };
+let enemy = { x: 600, y: 300, health: 100, punching: false };
+
+// Controls
+const keys = {};
+window.addEventListener("keydown", (e) => keys[e.code] = true);
+window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+
+// Draw Function
+function drawStickFigure(x, y, punching, isEnemy) {
+    // Body
+    ctx.strokeStyle = isEnemy ? "blue" : "red";
+    ctx.lineWidth = 2;
+
+    // Head
+    ctx.beginPath();
+    ctx.arc(x, y - 30, 10, 0, Math.PI * 2); // Head
+    ctx.fillStyle = "peachpuff";
+    ctx.fill();
+    ctx.stroke();
+
+    // Face (Eyes and Mouth)
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(x - 5, y - 32, 2, 0, Math.PI * 2); // Left eye
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 5, y - 32, 2, 0, Math.PI * 2); // Right eye
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y - 25, 4, 0, Math.PI); // Mouth
+    ctx.stroke();
+
+    // Torso
+    ctx.beginPath();
+    ctx.moveTo(x, y - 20);
+    ctx.lineTo(x, y + 20);
+    ctx.stroke();
+
+    // Arms
+    ctx.beginPath();
+    if (punching) {
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x + (isEnemy ? -30 : 30), y); // Punching arm
+    } else {
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x - 20, y); // Left arm
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x + 20, y); // Right arm
+    }
+    ctx.stroke();
+
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(x, y + 20);
+    ctx.lineTo(x - 10, y + 40); // Left leg
+    ctx.moveTo(x, y + 20);
+    ctx.lineTo(x + 10, y + 40); // Right leg
+    ctx.stroke();
+
+    // Clothes (Shirt)
+    ctx.fillStyle = isEnemy ? "blue" : "red";
+    ctx.fillRect(x - 10, y - 20, 20, 20);
+}
+
+
+// Game Logic
+function update() {
+    // Movement
+    if (keys["ArrowRight"]) player.x += 5;
+    if (keys["ArrowLeft"]) player.x -= 5;
+    
+    // Punching (Space Key)
+    if (keys["Space"]) {
+        player.punching = true;
+        if (Math.abs(player.x - enemy.x) < 40) {
+            enemy.health -= 1; // Damage enemy
+        }
+    } else {
+        player.punching = false;
+    }
+
+    // Simple Enemy AI (Random Attacks)
+    if (Math.random() < 0.01) enemy.punching = true;
+    else enemy.punching = false;
+
+    if (enemy.punching && Math.abs(player.x - enemy.x) < 40) {
+        player.health -= 1; // Damage player
+    }
+
+    // Draw Everything
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Health Bars
+    ctx.fillStyle = "red";
+    ctx.fillRect(50, 50, player.health, 10);
+    ctx.fillStyle = "blue";
+    ctx.fillRect(650, 50, enemy.health, 10);
+
+    drawStickFigure(player.x, player.y, player.punching, false);
+    drawStickFigure(enemy.x, enemy.y, enemy.punching, true);
+
+    // Check for Win Condition
+    if (player.health <= 0) {
+        alert("You Lose!");
+        window.location.reload();
+    } else if (enemy.health <= 0) {
+        alert("You Win!");
+        window.location.reload();
+    }
+
+    requestAnimationFrame(update);
+}
+
+update();
+    </script>
+    
+   
+    <script>
+        // Add realistic fighting effects
+        function addFightingEffects(x, y, isPunching) {
+            if (isPunching) {
+                // Create a small burst effect
+                ctx.fillStyle = "yellow";
+                for (let i = 0; i < 5; i++) {
+                    const offsetX = Math.random() * 10 - 5;
+                    const offsetY = Math.random() * 10 - 5;
+                    ctx.beginPath();
+                    ctx.arc(x + offsetX, y + offsetY, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Modify the drawStickFigure function to include fighting effects
+        const originalDrawStickFigure = drawStickFigure;
+        drawStickFigure = function (x, y, punching, isEnemy) {
+            originalDrawStickFigure(x, y, punching, isEnemy);
+            if (punching) {
+                const effectX = isEnemy ? x - 30 : x + 30;
+                addFightingEffects(effectX, y - 10, punching);
+            }
+        };
+    </script>
+
+    <script>
+
+        // Enhance enemy AI to fight back harder
+        function enhancedEnemyAI() {
+            enemies.forEach((enemy) => {
+                // Move towards the player or Player 2
+                if (player && Math.abs(enemy.x - player.x) > 40) {
+                    enemy.x += enemy.x < player.x ? 2 : -2;
+                }
+                if (player2 && Math.abs(enemy.x - player2.x) > 40) {
+                    enemy.x += enemy.x < player2.x ? 2 : -2;
+                }
+
+                // Increase punching frequency
+                if (Math.random() < 0.05) {
+                    enemy.punching = true;
+                    if (player && Math.abs(enemy.x - player.x) < 40) {
+                        player.health -= 2; // Deal more damage to Player 1
+                    }
+                    if (player2 && Math.abs(enemy.x - player2.x) < 40) {
+                        player2.health -= 2; // Deal more damage to Player 2
+                    }
+                } else {
+                    enemy.punching = false;
+                }
+            });
+        }
+
+        // Call enhancedEnemyAI in the update function
+        const originalUpdateWithEnhancedAI = update;
+        update = function () {
+            originalUpdateWithEnhancedAI();
+            enhancedEnemyAI();
+        };
+    </script>
+     
+    <script>
+       
+    // Additional Enemies
+    let enemies = [
+        { x: 500, y: 300, health: 100, punching: false },
+        { x: 700, y: 300, health: 100, punching: false },
+        { x: 300, y: 300, health: 100, punching: false }
+    ];
+
+    // Enemy AI Movement and Attacks
+    function updateEnemies() {
+        enemies.forEach((enemy, index) => {
+            // Random movement
+            if (Math.random() < 0.5) {
+                enemy.x += Math.random() < 0.5 ? 2 : -2;
+            }
+
+            // Random punching
+            if (Math.random() < 0.01) {
+                enemy.punching = true;
+                if (Math.abs(enemy.x - player.x) < 40) {
+                    player.health -= 1; // Damage player
+                }
+                if (player2 && Math.abs(enemy.x - player2.x) < 40) {
+                    player2.health -= 1; // Damage Player 2
+                }
+            } else {
+                enemy.punching = false;
+            }
+
+            // Draw enemy
+            drawStickFigure(enemy.x, enemy.y, enemy.punching, true);
+
+            // Check if enemy is in lava
+            if (enemy.y + 20 >= canvas.height - 50) {
+                enemy.health -= 1;
+            }
+
+            // Draw enemy health bar
+            ctx.fillStyle = "blue";
+            ctx.fillRect(650 - index * 50, 70, enemy.health, 10);
+
+            // Check if enemy is defeated
+            if (enemy.health <= 0) {
+                alert(`Enemy ${index + 1} is defeated!`);
+                enemies.splice(index, 1); // Remove defeated enemy
+            }
+        });
+    }
+
+    // Modify the update function to include additional enemies
+    const originalUpdateWithEnemies = update;
+    update = function () {
+        originalUpdateWithEnemies();
+        updateEnemies();
+    };
+
+
+
+    </script>
+
+    <script>
+
+        // Reduce enemy health when punched by Player 1 or Player 2
+        function handleEnemyDamage() {
+            enemies.forEach((enemy) => {
+                if (player.punching && Math.abs(player.x - enemy.x) < 40) {
+                    enemy.health -= 1; // Damage enemy by Player 1
+                }
+                if (player2 && player2.punching && Math.abs(player2.x - enemy.x) < 40) {
+                    enemy.health -= 1; // Damage enemy by Player 2
+                }
+            });
+        }
+
+        // Call handleEnemyDamage in the update function
+        const originalUpdateWithEnemyDamage = update;
+        update = function () {
+            originalUpdateWithEnemyDamage();
+            handleEnemyDamage();
+        };
+    </script>
+
+    <script>
+
+        // Display individual enemy health bars
+        function drawEnemyHealthBars() {
+            enemies.forEach((enemy, index) => {
+                ctx.fillStyle = "blue";
+                ctx.fillRect(650 - index * 100, 70, enemy.health, 10);
+                ctx.strokeStyle = "white";
+                ctx.strokeRect(650 - index * 100, 70, 100, 10); // Outline for clarity
+            });
+        }
+
+        // Modify the update function to include enemy health bars
+        const originalUpdateWithEnemyHealthBars = update;
+        update = function () {
+            originalUpdateWithEnemyHealthBars();
+            drawEnemyHealthBars();
+        };
+    </script>
+    
+    
+    <script>
+
+        // Add a button to spawn Player 2
+        const spawnButton = document.createElement('button');
+        spawnButton.innerText = 'Spawn Player 2';
+        spawnButton.style.position = 'absolute';
+        spawnButton.style.top = '10px';
+        spawnButton.style.right = '10px';
+        spawnButton.style.padding = '10px 20px';
+        spawnButton.style.fontSize = '16px';
+        spawnButton.style.cursor = 'pointer';
+        document.body.appendChild(spawnButton);
+
+        let player2 = null;
+
+        // Event listener for the spawn button
+        spawnButton.addEventListener('click', () => {
+            if (!player2) {
+                player2 = { x: 400, y: 300, health: 100, punching: false };
+                alert('Player 2 has joined the game!');
+            }
+        });
+
+        // Controls for Player 2
+        window.addEventListener("keydown", (e) => {
+            if (player2) {
+                if (e.code === "KeyD") player2.x += 5;
+                if (e.code === "KeyA") player2.x -= 5;
+                if (e.code === "KeyW") {
+                    player2.punching = true;
+                    if (Math.abs(player2.x - enemy.x) < 40) {
+                        enemy.health -= 1; // Damage enemy
+                    }
+                }
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            if (player2 && e.code === "KeyW") {
+                player2.punching = false;
+            }
+        });
+
+        // Modify the update function to include Player 2
+        const originalUpdateWithPlayer2 = update;
+        update = function () {
+            originalUpdateWithPlayer2();
+
+            if (player2) {
+                drawStickFigure(player2.x, player2.y, player2.punching, false);
+
+                // Check if Player 2 is in lava
+                if (player2.y + 20 >= canvas.height - 50) {
+                    player2.health -= 1;
+                }
+
+                // Draw Player 2's health bar
+                ctx.fillStyle = "green";
+                ctx.fillRect(350, 50, player2.health, 10);
+
+                // Check if Player 2 loses
+                if (player2.health <= 0) {
+                    alert("Player 2 is defeated!");
+                    player2 = null; // Remove Player 2
+                }
+            }
+        };
+
+    </script>
+
+    <script>
+      
+    // Add a container for the scoreboard
+    const scoreboardContainer = document.createElement('div');
+    scoreboardContainer.style.position = 'absolute';
+    scoreboardContainer.style.top = '10px';
+    scoreboardContainer.style.left = '50%';
+    scoreboardContainer.style.transform = 'translateX(-50%)';
+    scoreboardContainer.style.padding = '10px';
+    scoreboardContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    scoreboardContainer.style.borderRadius = '5px';
+    scoreboardContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+    scoreboardContainer.style.color = 'white';
+    scoreboardContainer.style.fontSize = '20px';
+    scoreboardContainer.style.fontFamily = 'Arial, sans-serif';
+    scoreboardContainer.style.textAlign = 'center';
+    scoreboardContainer.innerHTML = `Player (Red): ${playerScore} - Enemy (Blue): ${enemyScore}`;
+    document.body.appendChild(scoreboardContainer);
+
+    // Update the scoreboard container
+    function updateScoreboard() {
+        scoreboardContainer.innerHTML = `Player (Red): ${playerScore} - Enemy (Blue): ${enemyScore}`;
+    }
+
+    // Modify the updateScore function to update the scoreboard container
+    function updateScore(winner) {
+        if (winner === 'player') {
+            playerScore++;
+        } else if (winner === 'enemy') {
+            enemyScore++;
+        }
+
+        updateScoreboard();
+
+        if (playerScore === 3) {
+            alert("Player Wins the Game!");
+            window.location.reload();
+        } else if (enemyScore === 3) {
+            alert("Enemy Wins the Game!");
+            window.location.reload();
+        }
+    }
+        
+    </script>
+    <script>
+        // Scoreboard
+        let playerScore = 0;
+        let enemyScore = 0;
+
+        const scoreboard = document.createElement('div');
+        scoreboard.style.position = 'absolute';
+        scoreboard.style.top = '10px';
+        scoreboard.style.left = '50%';
+        scoreboard.style.transform = 'translateX(-50%)';
+        scoreboard.style.color = 'white';
+        scoreboard.style.fontSize = '24px';
+        scoreboard.style.fontFamily = 'Arial, sans-serif';
+        scoreboard.style.textAlign = 'center';
+        scoreboard.innerHTML = `Player (Red): ${playerScore} - Enemy (Blue): ${enemyScore}`;
+        document.body.appendChild(scoreboard);
+
+        
+
+        function updateScore(winner) {
+            if (winner === 'player') {
+                playerScore++;
+            } else if (winner === 'enemy') {
+                enemyScore++;
+            }
+
+            scoreboard.innerHTML = `Player (Red): ${playerScore} - Enemy (Blue): ${enemyScore}`;
+
+            if (playerScore === 3) {
+                alert("Player Wins the Game!");
+                window.location.reload();
+            } else if (enemyScore === 3) {
+                alert("Enemy Wins the Game!");
+                window.location.reload();
+            }
+        }
+
+        // Modify win condition in the update function
+        function checkWinCondition() {
+            if (player.health <= 0) {
+                updateScore('enemy');
+                player.health = 100;
+                enemy.health = 100;
+            } else if (enemy.health <= 0) {
+                updateScore('player');
+                player.health = 100;
+                enemy.health = 100;
+            }
+        }
+
+        // Call checkWinCondition in the update function
+        const originalUpdate = update;
+        update = function () {
+            originalUpdate();
+            checkWinCondition();
+        };
+    </script>
+    <script>
+        // Add an Exit button to end the game
+        const exitButton = document.createElement('button');
+        exitButton.innerText = 'Exit Game';
+        exitButton.style.position = 'absolute';
+        exitButton.style.bottom = '10px';
+        exitButton.style.left = '10px';
+        exitButton.style.padding = '10px 20px';
+        exitButton.style.fontSize = '16px';
+        exitButton.style.cursor = 'pointer';
+        document.body.appendChild(exitButton);
+
+        // Event listener for the Exit button
+        exitButton.addEventListener('click', () => {
+            alert("Thanks for playing!");
+            window.location.reload();
+        });
+
+        // Modify the playAgainPrompt function to remove automatic reload
+        function playAgainPrompt() {
+            const playAgain = confirm("Do you want to play again?");
+            if (playAgain) {
+                player.health = 100;
+                enemy.health = 100;
+                if (player2) {
+                    player2.health = 100;
+                }
+                playerScore = 0;
+                enemyScore = 0;
+                enemies = [
+                    { x: 500, y: 300, health: 100, punching: false },
+                    { x: 700, y: 300, health: 100, punching: false },
+                    { x: 300, y: 300, health: 100, punching: false }
+                ];
+                scoreboard.innerHTML = `Player (Red): ${playerScore} - Enemy (Blue): ${enemyScore}`;
+                update();
+            }
+        }
+
+        // Modify the win condition to remove automatic reload
+        if (typeof originalCheckWinCondition === 'undefined') {
+            var originalCheckWinCondition = checkWinCondition;
+        }
+        checkWinCondition = function () {
+            originalCheckWinCondition();
+            if (player.health <= 0 || enemy.health <= 0) {
+                playAgainPrompt();
+            }
+        };
+    </script>
+    
+    <script>
+        // Update player scores when enemies are defeated
+        function updatePlayerScores() {
+            enemies.forEach((enemy, index) => {
+                if (enemy.health <= 0) {
+                    if (player.punching && Math.abs(player.x - enemy.x) < 40) {
+                        playerScore++;
+                    }
+                    if (player2 && player2.punching && Math.abs(player2.x - enemy.x) < 40) {
+                        playerScore++;
+                    }
+                    enemies.splice(index, 1); // Remove defeated enemy
+                    updateScoreboard(); // Update the scoreboard
+                }
+            });
+        }
+
+        // Modify the update function to include player score updates
+        const originalUpdateWithPlayerScores = update;
+        update = function () {
+            originalUpdateWithPlayerScores();
+            updatePlayerScores();
+        };
+    </script>
+    
+    <script>
+        // Add a button to spawn more enemies
+        const addEnemiesButton = document.createElement('button');
+        addEnemiesButton.innerText = 'Add More Enemies';
+        addEnemiesButton.style.position = 'absolute';
+        addEnemiesButton.style.bottom = '50px';
+        addEnemiesButton.style.right = '10px';
+        addEnemiesButton.style.padding = '10px 20px';
+        addEnemiesButton.style.fontSize = '16px';
+        addEnemiesButton.style.cursor = 'pointer';
+        document.body.appendChild(addEnemiesButton);
+
+        // Event listener for the add enemies button
+        addEnemiesButton.addEventListener('click', () => {
+            const newEnemy = { 
+                x: Math.random() * canvas.width, 
+                y: 300, 
+                health: 100, 
+                punching: false 
+            };
+            enemies.push(newEnemy);
+            alert('A new enemy has been added!');
+        });
+    </script>
+    <script>
+
+        
+    </script>
+
+    <script>
+    
+    // Wrap the canvas in a container box
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '50%';
+    container.style.left = '50%';
+    container.style.transform = 'translate(-50%, -50%)';
+    container.style.width = '800px';
+    container.style.height = '400px';
+    container.style.overflow = 'hidden';
+    container.style.border = '2px solid white';
+    container.style.borderRadius = '10px';
+    container.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+    container.appendChild(canvas);
+    document.body.appendChild(container);
+</script>
+<script>
+
+</script>
+
+
+    <style>
+    div {
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        color: rgb(253, 1, 1);
+        background-color: rgba(36, 13, 13, 0.8);
+        border: 2px solid rgb(255, 9, 9);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    input[type="text"], input[type="number"] {
+        width: 80%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ffffff;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    button {
+        background-color: #ff0000;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover {
+        background-color: #191a19;
+    }
+
+    body > *:not(form) {
+        display: none;
+    }
+
+    form {
+        display: block;
+    }
+    </style>
+    <script>
+
+
+    </script>
+    
+    <style>
+        /* Add a hoodie and katana for Player 1 */
+        #gameCanvas {
+            position: relative;
+        }
+
+        .hoodie {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100px;
+            height: 150px;
+            background: linear-gradient(to bottom, #333, #111);
+            border-radius: 50% 50% 0 0;
+            z-index: 1;
+        }
+
+        .katana {
+            position: absolute;
+            width: 5px;
+            height: 100px;
+            background: linear-gradient(to bottom, silver, gray);
+            border-radius: 2px;
+            transform: rotate(45deg);
+            z-index: 2;
+        }
+    </style>
+        
+        <script>   
+
+        </script>
+
+
+       
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        background: url(https://wallup.net/wp-content/uploads/2016/04/10/281838-digital_art-water-sea-nature-clouds-fantasy_art-lava-planet-hill-rock-hell.jpg);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center center;
+            background-color: #000;
+        background-size: cover;
+        }
+        canvas {
+            display: block;
+        }
+       
+    </style>
+
+
+
+    <script>
+       
+    </script>
+
+    
+
+</body>
+</html>
